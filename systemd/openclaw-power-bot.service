@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenClaw Power Discord Bot (LLM-free)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.openclaw/workspace/GitHub/openclaw-power-bot
+EnvironmentFile=%h/.config/openclaw-power-bot.env
+ExecStart=%h/.openclaw/workspace/GitHub/openclaw-power-bot/.venv/bin/python %h/.openclaw/workspace/GitHub/openclaw-power-bot/bot.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target
