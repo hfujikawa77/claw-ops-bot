@@ -51,6 +51,13 @@ async def gateway_status_text() -> str:
     return f'STATUS: {st}'
 
 
+async def recent_gateway_logs(lines: int = 8) -> str:
+    rc, out = await run_cmd('journalctl', '--user', '-u', 'openclaw-gateway.service', '-n', str(lines), '--no-pager')
+    if rc != 0:
+        return out[:1500]
+    return out[:1500]
+
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} ({bot.user.id})')
@@ -80,6 +87,8 @@ async def _start(ctx: commands.Context):
         return
     rc, out = await run_cmd('systemctl', '--user', 'start', 'openclaw-gateway.service')
     st = await gateway_status_text()
+    if out.strip() == '(no output)':
+        out = await recent_gateway_logs(8)
     await ctx.reply(f"{'OK' if rc == 0 else 'NG'} start\n{st}\n```\n{out[:1500]}\n```", mention_author=False)
 
 
@@ -89,6 +98,8 @@ async def _restart(ctx: commands.Context):
         return
     rc, out = await run_cmd('systemctl', '--user', 'restart', 'openclaw-gateway.service')
     st = await gateway_status_text()
+    if out.strip() == '(no output)':
+        out = await recent_gateway_logs(8)
     await ctx.reply(f"{'OK' if rc == 0 else 'NG'} restart\n{st}\n```\n{out[:1500]}\n```", mention_author=False)
 
 
@@ -104,6 +115,8 @@ async def _stop(ctx: commands.Context, *args):
         pending_stop.pop(ctx.author.id, None)
         rc, out = await run_cmd('systemctl', '--user', 'stop', 'openclaw-gateway.service')
         st = await gateway_status_text()
+        if out.strip() == '(no output)':
+            out = await recent_gateway_logs(8)
         await ctx.reply(f"{'OK' if rc == 0 else 'NG'} stop\n{st}\n```\n{out[:1500]}\n```", mention_author=False)
         return
 
