@@ -36,6 +36,27 @@ systemctl --user enable --now openclaw-power-bot.service
 systemctl --user status openclaw-power-bot.service --no-pager
 ```
 
+## 停止 / サービス登録解除
+
+### アプリ停止
+```bash
+systemctl --user stop openclaw-power-bot.service
+systemctl --user status openclaw-power-bot.service --no-pager
+```
+
+### systemd --user サービス登録解除
+```bash
+systemctl --user disable openclaw-power-bot.service
+rm -f ~/.config/systemd/user/openclaw-power-bot.service
+systemctl --user daemon-reload
+systemctl --user reset-failed
+```
+
+### （任意）手動起動プロセスの停止
+```bash
+pkill -f "python(3)? bot\.py" || true
+```
+
 ## Discord Bot 作成手順（Private運用）
 1. Discord Developer Portal: <https://discord.com/developers/applications>
 2. `New Application` → 名前入力（例: `openclaw-power-bot`）
