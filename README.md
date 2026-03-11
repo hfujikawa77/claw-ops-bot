@@ -19,7 +19,9 @@ cp .env.example ~/.config/openclaw-power-bot.env
 # edit ~/.config/openclaw-power-bot.env
 ```
 
-## Run (manual)
+## 起動 / サービス登録
+
+### Run (manual)
 ```bash
 cd ~/.openclaw/workspace/GitHub/openclaw-power-bot
 . .venv/bin/activate
@@ -27,7 +29,7 @@ set -a; source ~/.config/openclaw-power-bot.env; set +a
 python bot.py
 ```
 
-## Run as systemd --user
+### Run as systemd --user（サービス登録 + 起動）
 ```bash
 mkdir -p ~/.config/systemd/user
 cp systemd/openclaw-power-bot.service ~/.config/systemd/user/
