@@ -2,11 +2,15 @@
 Description=OpenClaw Power Discord Bot (LLM-free)
 After=network-online.target
 
+# NOTE:
+# Prefer scripts/install-user-service.sh for installation.
+# This file is kept as a reference template only.
+
 [Service]
 Type=simple
-WorkingDirectory=%h/.openclaw/workspace/GitHub/openclaw-power-bot
-EnvironmentFile=%h/.config/openclaw-power-bot.env
-ExecStart=%h/.openclaw/workspace/GitHub/openclaw-power-bot/.venv/bin/python %h/.openclaw/workspace/GitHub/openclaw-power-bot/bot.py
+Environment=BOT_HOME=%h/openclaw-power-bot
+Environment=ENV_FILE=%h/.config/openclaw-power-bot.env
+ExecStart=%h/openclaw-power-bot/scripts/run.sh
 Restart=always
 RestartSec=2
 

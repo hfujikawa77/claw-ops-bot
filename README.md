@@ -11,32 +11,32 @@ DiscordからOpenClaw Gatewayを直接制御する専用Bot（LLM非経由）。
 
 ## Setup
 ```bash
-cd ~/.openclaw/workspace/GitHub/openclaw-power-bot
+git clone https://github.com/hfujikawa77/openclaw-power-bot.git
+cd openclaw-power-bot
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example ~/.config/openclaw-power-bot.env
 # edit ~/.config/openclaw-power-bot.env
+chmod +x scripts/run.sh scripts/install-user-service.sh
 ```
 
 ## 起動 / サービス登録
 
 ### Run (manual)
 ```bash
-cd ~/.openclaw/workspace/GitHub/openclaw-power-bot
-. .venv/bin/activate
-set -a; source ~/.config/openclaw-power-bot.env; set +a
-python bot.py
+cd /path/to/openclaw-power-bot
+BOT_HOME="$(pwd)" ./scripts/run.sh
 ```
 
 ### Run as systemd --user（サービス登録 + 起動）
 ```bash
-mkdir -p ~/.config/systemd/user
-cp systemd/openclaw-power-bot.service ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now openclaw-power-bot.service
-systemctl --user status openclaw-power-bot.service --no-pager
+cd /path/to/openclaw-power-bot
+./scripts/install-user-service.sh
 ```
+
+> `install-user-service.sh` は実行時のディレクトリから絶対パスを解決して、
+> `~/.config/systemd/user/openclaw-power-bot.service` を自動生成します。
 
 ## 停止 / サービス登録解除
 
