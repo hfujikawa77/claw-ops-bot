@@ -101,6 +101,9 @@ Discordで以下を実行:
 - `!oc restart`
 - `!oc logs`
 
+## License
+MIT
+
 ## Notes
 - OpenClaw本体停止中でも、このBotが生きていれば `!oc start` で復旧可能。
 - 既存 `openclaw-power-web` とは非依存。
