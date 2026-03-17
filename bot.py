@@ -10,6 +10,8 @@ ALLOWED_USER_IDS = {int(x) for x in os.getenv('ALLOWED_USER_IDS', '').split(',')
 ALLOWED_CHANNEL_IDS = {int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS', '').split(',') if x.strip().isdigit()}
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!oc')
 QT_PREFIX = os.getenv('QT_PREFIX', '!qt')
+CC_PREFIX = os.getenv('CC_PREFIX', '!cc')
+CLAUDE_CMD = os.getenv('CLAUDE_CMD', 'claude')
 QT_URL_FILE = os.getenv('URL_OUTPUT_FILE', '')
 STOP_CONFIRM_SECONDS = int(os.getenv('STOP_CONFIRM_SECONDS', '30'))
 
@@ -36,14 +38,14 @@ def authorized_message(message: discord.Message) -> bool:
     return True
 
 
-async def run_cmd(*cmd: str) -> tuple[int, str]:
+async def run_cmd(*cmd: str, timeout: int = 12) -> tuple[int, str]:
     p = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     try:
-        out, err = await asyncio.wait_for(p.communicate(), timeout=12)
+        out, err = await asyncio.wait_for(p.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
         p.kill()
         return 124, f'timeout: {' '.join(cmd)}'
@@ -149,6 +151,17 @@ async def on_message(message: discord.Message):
     await bot.process_commands(message)
 
     text = message.content.strip()
+    if text.startswith(CC_PREFIX + ' '):
+        if not authorized_message(message):
+            return
+        prompt = text[len(CC_PREFIX):].strip()
+        await message.add_reaction('⏳')
+        rc, out = await run_cmd(CLAUDE_CMD, '-p', prompt, timeout=120)
+        await message.remove_reaction('⏳', bot.user)
+        prefix = 'OK' if rc == 0 else 'NG'
+        await message.reply(f'{prefix}\n{out[:1800]}', mention_author=False)
+        return
+
     if text.startswith(QT_PREFIX + ' ') or text == QT_PREFIX:
         if not authorized_message(message):
             return
