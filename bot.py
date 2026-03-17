@@ -9,6 +9,7 @@ from discord.ext import commands
 ALLOWED_USER_IDS = {int(x) for x in os.getenv('ALLOWED_USER_IDS', '').split(',') if x.strip().isdigit()}
 ALLOWED_CHANNEL_IDS = {int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS', '').split(',') if x.strip().isdigit()}
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!oc')
+QT_PREFIX = os.getenv('QT_PREFIX', '!qt')
 STOP_CONFIRM_SECONDS = int(os.getenv('STOP_CONFIRM_SECONDS', '30'))
 
 token = os.getenv('DISCORD_BOT_TOKEN', '').strip()
@@ -23,9 +24,13 @@ pending_stop = {}  # user_id -> expiry datetime
 
 
 def authorized(ctx: commands.Context) -> bool:
-    if ALLOWED_USER_IDS and ctx.author.id not in ALLOWED_USER_IDS:
+    return authorized_message(ctx.message)
+
+
+def authorized_message(message: discord.Message) -> bool:
+    if ALLOWED_USER_IDS and message.author.id not in ALLOWED_USER_IDS:
         return False
-    if ALLOWED_CHANNEL_IDS and ctx.channel.id not in ALLOWED_CHANNEL_IDS:
+    if ALLOWED_CHANNEL_IDS and message.channel.id not in ALLOWED_CHANNEL_IDS:
         return False
     return True
 
@@ -141,6 +146,20 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
     await bot.process_commands(message)
+
+    text = message.content.strip()
+    if text.startswith(QT_PREFIX + ' ') or text == QT_PREFIX:
+        if not authorized_message(message):
+            return
+        args = text[len(QT_PREFIX):].strip().split()
+        if args == ['restart']:
+            rc, out = await run_cmd('systemctl', '--user', 'restart', 'quick-tunnel.service')
+            await message.reply(
+                f"{'OK' if rc == 0 else 'NG'} qt restart\n```\n{out[:1800]}\n```",
+                mention_author=False,
+            )
+        else:
+            await message.reply(f'Commands: `{QT_PREFIX} restart`', mention_author=False)
 
 
 bot.run(token)
