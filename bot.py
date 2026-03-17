@@ -10,6 +10,7 @@ ALLOWED_USER_IDS = {int(x) for x in os.getenv('ALLOWED_USER_IDS', '').split(',')
 ALLOWED_CHANNEL_IDS = {int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS', '').split(',') if x.strip().isdigit()}
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!oc')
 QT_PREFIX = os.getenv('QT_PREFIX', '!qt')
+QT_URL_FILE = os.getenv('URL_OUTPUT_FILE', '')
 STOP_CONFIRM_SECONDS = int(os.getenv('STOP_CONFIRM_SECONDS', '30'))
 
 token = os.getenv('DISCORD_BOT_TOKEN', '').strip()
@@ -158,8 +159,18 @@ async def on_message(message: discord.Message):
                 f"{'OK' if rc == 0 else 'NG'} qt restart\n```\n{out[:1800]}\n```",
                 mention_author=False,
             )
+        elif args == ['url']:
+            if not QT_URL_FILE:
+                await message.reply('QT_URL_FILE is not configured', mention_author=False)
+            else:
+                try:
+                    with open(QT_URL_FILE) as f:
+                        url = f.read().strip()
+                    await message.reply(url or '(empty)', mention_author=False)
+                except FileNotFoundError:
+                    await message.reply('URL file not found', mention_author=False)
         else:
-            await message.reply(f'Commands: `{QT_PREFIX} restart`', mention_author=False)
+            await message.reply(f'Commands: `{QT_PREFIX} restart | url`', mention_author=False)
 
 
 bot.run(token)
