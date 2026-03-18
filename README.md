@@ -3,11 +3,20 @@
 DiscordからOpenClaw Gatewayを直接制御する専用Bot（LLM非経由）。
 
 ## Commands
-- `!oc status`
-- `!oc start`
-- `!oc restart`
-- `!oc stop` → `!oc stop confirm`（30秒以内）
-- `!oc logs`
+
+| コマンド | 説明 |
+|---|---|
+| `!oc status` | Gateway の稼働状態確認 |
+| `!oc start` | Gateway 起動 |
+| `!oc restart` | Gateway 再起動 |
+| `!oc stop` → `!oc stop confirm` | Gateway 停止（30秒以内に確認） |
+| `!oc logs` | Gateway の最新ログ表示 |
+| `!oc cl` | `openclaw cron list` |
+| `!oc ml` | `openclaw models list` |
+| `!oc ms <key>` | `openclaw models set`（key: `kimi` / `codex` / `trinity`） |
+| `!pb refresh` | Bot を `git pull` で最新化して再起動 |
+| `!qt restart` | quick-tunnel 再起動 |
+| `!qt url` | quick-tunnel の現在のURL表示 |
 
 ## Setup
 ```bash
@@ -98,6 +107,10 @@ Discordの `Developer Mode` をONにしてコピー:
 ALLOWED_USER_IDS=<YOUR_DISCORD_USER_ID>
 ALLOWED_CHANNEL_IDS=<YOUR_DISCORD_CHANNEL_ID>
 ```
+
+> **⚠️ セキュリティ上の注意**
+> `ALLOWED_USER_IDS` と `ALLOWED_CHANNEL_IDS` は**必ず設定してください**。
+> 未設定の場合、Botが参加しているチャンネルの**誰でも** `systemctl restart`・`git pull`・`claude -p` などのコマンドを実行できてしまいます。
 
 ## 運用確認コマンド
 Discordで以下を実行:
