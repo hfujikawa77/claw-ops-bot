@@ -38,6 +38,12 @@ cd /path/to/openclaw-power-bot
 > `install-user-service.sh` は実行時のディレクトリから絶対パスを解決して、
 > `~/.config/systemd/user/openclaw-power-bot.service` を自動生成します。
 
+## 再起動
+
+```bash
+systemctl --user restart openclaw-power-bot.service
+```
+
 ## 停止 / サービス登録解除
 
 ### アプリ停止
