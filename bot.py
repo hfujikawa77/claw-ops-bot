@@ -11,9 +11,17 @@ ALLOWED_CHANNEL_IDS = {int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS', '').spli
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!oc')
 QT_PREFIX = os.getenv('QT_PREFIX', '!qt')
 CC_PREFIX = os.getenv('CC_PREFIX', '!cc')
+PB_PREFIX = os.getenv('PB_PREFIX', '!pb')
 CLAUDE_CMD = os.getenv('CLAUDE_CMD', 'claude')
 QT_URL_FILE = os.getenv('URL_OUTPUT_FILE', '')
 STOP_CONFIRM_SECONDS = int(os.getenv('STOP_CONFIRM_SECONDS', '30'))
+BOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_MAP = {
+    'kimi': 'openrouter/moonshotai/kimi-k2.5',
+    'codex': 'openai-codex/gpt-5.3-codex',
+    'trinity': 'openrouter/arcee-ai/trinity-large-preview:free',
+}
 
 token = os.getenv('DISCORD_BOT_TOKEN', '').strip()
 if not token:
@@ -38,11 +46,12 @@ def authorized_message(message: discord.Message) -> bool:
     return True
 
 
-async def run_cmd(*cmd: str, timeout: int = 12) -> tuple[int, str]:
+async def run_cmd(*cmd: str, timeout: int = 12, cwd: str | None = None) -> tuple[int, str]:
     p = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        cwd=cwd,
     )
     try:
         out, err = await asyncio.wait_for(p.communicate(), timeout=timeout)
@@ -76,8 +85,9 @@ async def _help(ctx: commands.Context):
     if not authorized(ctx):
         return
     await ctx.reply(
-        'Commands: `!oc status | start | stop | stop confirm | restart | logs`\n'
-        f'Prefix: `{COMMAND_PREFIX}`',
+        f'`{COMMAND_PREFIX}`: `status | start | stop | stop confirm | restart | logs | cl | ml | ms <key>`\n'
+        f'`{PB_PREFIX}`: `refresh`\n'
+        f'`{QT_PREFIX}`: `restart | url`',
         mention_author=False,
     )
 
@@ -144,6 +154,38 @@ async def _logs(ctx: commands.Context):
     await ctx.reply(f'{prefix} logs\n```\n{out[:1800]}\n```', mention_author=False)
 
 
+@bot.command(name='cl')
+async def _cron_list(ctx: commands.Context):
+    if not authorized(ctx):
+        return
+    rc, out = await run_cmd('openclaw', 'cron', 'list')
+    prefix = 'OK' if rc == 0 else 'NG'
+    await ctx.reply(f'{prefix} cron list\n```\n{out[:1800]}\n```', mention_author=False)
+
+
+@bot.command(name='ml')
+async def _models_list(ctx: commands.Context):
+    if not authorized(ctx):
+        return
+    rc, out = await run_cmd('openclaw', 'models', 'list')
+    prefix = 'OK' if rc == 0 else 'NG'
+    await ctx.reply(f'{prefix} models list\n```\n{out[:1800]}\n```', mention_author=False)
+
+
+@bot.command(name='ms')
+async def _models_set(ctx: commands.Context, key: str = ''):
+    if not authorized(ctx):
+        return
+    model_name = MODEL_MAP.get(key)
+    if not model_name:
+        keys = ', '.join(f'`{k}`' for k in MODEL_MAP)
+        await ctx.reply(f'Unknown model key. Available: {keys}', mention_author=False)
+        return
+    rc, out = await run_cmd('openclaw', 'models', 'set', model_name)
+    prefix = 'OK' if rc == 0 else 'NG'
+    await ctx.reply(f'{prefix} models set `{model_name}`\n```\n{out[:1800]}\n```', mention_author=False)
+
+
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -154,12 +196,38 @@ async def on_message(message: discord.Message):
     if text.startswith(CC_PREFIX + ' '):
         if not authorized_message(message):
             return
-        prompt = text[len(CC_PREFIX):].strip()
+        rest = text[len(CC_PREFIX):].strip()
+        cwd = None
+        if rest.startswith('-C '):
+            parts = rest[3:].split(None, 1)
+            if len(parts) < 2:
+                await message.reply('Usage: `!cc -C /path/to/dir prompt`', mention_author=False)
+                return
+            cwd, rest = parts
+            if not os.path.isdir(cwd):
+                await message.reply(f'Not a directory: `{cwd}`', mention_author=False)
+                return
+        prompt = rest
         await message.add_reaction('⏳')
-        rc, out = await run_cmd(CLAUDE_CMD, '-p', prompt, timeout=120)
+        rc, out = await run_cmd(CLAUDE_CMD, '-p', prompt, timeout=120, cwd=cwd)
         await message.remove_reaction('⏳', bot.user)
         prefix = 'OK' if rc == 0 else 'NG'
         await message.reply(f'{prefix}\n{out[:1800]}', mention_author=False)
+        return
+
+    if text.startswith(PB_PREFIX + ' ') or text == PB_PREFIX:
+        if not authorized_message(message):
+            return
+        args = text[len(PB_PREFIX):].strip().split()
+        if args == ['refresh']:
+            rc_pull, out_pull = await run_cmd('git', 'pull', cwd=BOT_DIR)
+            await message.reply(
+                f"{'OK' if rc_pull == 0 else 'NG'} git pull\n```\n{out_pull[:1800]}\n```\nrestarting...",
+                mention_author=False,
+            )
+            await run_cmd('systemctl', '--user', 'restart', 'openclaw-power-bot.service')
+        else:
+            await message.reply(f'Commands: `{PB_PREFIX} refresh`', mention_author=False)
         return
 
     if text.startswith(QT_PREFIX + ' ') or text == QT_PREFIX:
