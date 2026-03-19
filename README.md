@@ -1,4 +1,4 @@
-# openclaw-power-bot
+# claw-ops-bot
 
 DiscordからOpenClaw Gatewayを直接制御する専用Bot（LLM非経由）。
 
@@ -20,13 +20,13 @@ DiscordからOpenClaw Gatewayを直接制御する専用Bot（LLM非経由）。
 
 ## Setup
 ```bash
-git clone https://github.com/hfujikawa77/openclaw-power-bot.git
-cd openclaw-power-bot
+git clone https://github.com/hfujikawa77/claw-ops-bot.git
+cd claw-ops-bot
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example ~/.config/openclaw-power-bot.env
-# edit ~/.config/openclaw-power-bot.env
+cp .env.example ~/.config/claw-ops-bot.env
+# edit ~/.config/claw-ops-bot.env
 chmod +x scripts/run.sh scripts/install-user-service.sh
 ```
 
@@ -34,37 +34,37 @@ chmod +x scripts/run.sh scripts/install-user-service.sh
 
 ### Run (manual)
 ```bash
-cd /path/to/openclaw-power-bot
+cd /path/to/claw-ops-bot
 BOT_HOME="$(pwd)" ./scripts/run.sh
 ```
 
 ### Run as systemd --user（サービス登録 + 起動）
 ```bash
-cd /path/to/openclaw-power-bot
+cd /path/to/claw-ops-bot
 ./scripts/install-user-service.sh
 ```
 
 > `install-user-service.sh` は実行時のディレクトリから絶対パスを解決して、
-> `~/.config/systemd/user/openclaw-power-bot.service` を自動生成します。
+> `~/.config/systemd/user/claw-ops-bot.service` を自動生成します。
 
 ## 再起動
 
 ```bash
-systemctl --user restart openclaw-power-bot.service
+systemctl --user restart claw-ops-bot.service
 ```
 
 ## 停止 / サービス登録解除
 
 ### アプリ停止
 ```bash
-systemctl --user stop openclaw-power-bot.service
-systemctl --user status openclaw-power-bot.service --no-pager
+systemctl --user stop claw-ops-bot.service
+systemctl --user status claw-ops-bot.service --no-pager
 ```
 
 ### systemd --user サービス登録解除
 ```bash
-systemctl --user disable openclaw-power-bot.service
-rm -f ~/.config/systemd/user/openclaw-power-bot.service
+systemctl --user disable claw-ops-bot.service
+rm -f ~/.config/systemd/user/claw-ops-bot.service
 systemctl --user daemon-reload
 systemctl --user reset-failed
 ```
@@ -76,7 +76,7 @@ pkill -f "python(3)? bot\.py" || true
 
 ## Discord Bot 作成手順（Private運用）
 1. Discord Developer Portal: <https://discord.com/developers/applications>
-2. `New Application` → 名前入力（例: `openclaw-power-bot`）
+2. `New Application` → 名前入力（例: `claw-ops-bot`）
 3. 左メニュー `Bot` → `Add Bot`
 4. `Reset Token` でトークン発行（`DISCORD_BOT_TOKEN` に設定）
 5. `Message Content Intent` を **ON**
@@ -126,4 +126,4 @@ MIT
 ## Notes
 - OpenClaw本体停止中でも、このBotが生きていれば `!oc start` で復旧可能。
 - 既存 `openclaw-power-web` とは非依存。
-- トラブル時ログ: `journalctl --user -u openclaw-power-bot.service -n 100 --no-pager`
+- トラブル時ログ: `journalctl --user -u claw-ops-bot.service -n 100 --no-pager`

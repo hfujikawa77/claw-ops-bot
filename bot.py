@@ -225,7 +225,7 @@ async def on_message(message: discord.Message):
                 f"{'OK' if rc_pull == 0 else 'NG'} git pull\n```\n{out_pull[:1800]}\n```\nrestarting...",
                 mention_author=False,
             )
-            await run_cmd('systemctl', '--user', 'restart', 'openclaw-power-bot.service')
+            await run_cmd('systemctl', '--user', 'restart', 'claw-ops-bot.service')
         else:
             await message.reply(f'Commands: `{PB_PREFIX} refresh`', mention_author=False)
         return

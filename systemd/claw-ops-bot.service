@@ -8,9 +8,9 @@ After=network-online.target
 
 [Service]
 Type=simple
-Environment=BOT_HOME=%h/openclaw-power-bot
-Environment=ENV_FILE=%h/.config/openclaw-power-bot.env
-ExecStart=%h/openclaw-power-bot/scripts/run.sh
+Environment=BOT_HOME=%h/claw-ops-bot
+Environment=ENV_FILE=%h/.config/claw-ops-bot.env
+ExecStart=%h/claw-ops-bot/scripts/run.sh
 Restart=always
 RestartSec=2
 

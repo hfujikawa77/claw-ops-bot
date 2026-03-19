@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BOT_HOME="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-SERVICE_NAME="openclaw-power-bot.service"
+SERVICE_NAME="claw-ops-bot.service"
 SERVICE_DIR="$HOME/.config/systemd/user"
 SERVICE_FILE="$SERVICE_DIR/$SERVICE_NAME"
 
@@ -17,7 +17,7 @@ After=network-online.target
 [Service]
 Type=simple
 Environment=BOT_HOME=$BOT_HOME
-Environment=ENV_FILE=%h/.config/openclaw-power-bot.env
+Environment=ENV_FILE=%h/.config/claw-ops-bot.env
 ExecStart=$BOT_HOME/scripts/run.sh
 Restart=always
 RestartSec=2

@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_BOT_HOME="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 BOT_HOME="${BOT_HOME:-$DEFAULT_BOT_HOME}"
-ENV_FILE="${ENV_FILE:-$HOME/.config/openclaw-power-bot.env}"
+ENV_FILE="${ENV_FILE:-$HOME/.config/claw-ops-bot.env}"
 
 if [[ -f "$ENV_FILE" ]]; then
   set -a
