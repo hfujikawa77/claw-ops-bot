@@ -11,8 +11,10 @@ ALLOWED_CHANNEL_IDS = {int(x) for x in os.getenv('ALLOWED_CHANNEL_IDS', '').spli
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX', '!oc')
 QT_PREFIX = os.getenv('QT_PREFIX', '!qt')
 CC_PREFIX = os.getenv('CC_PREFIX', '!cc')
+CX_PREFIX = os.getenv('CX_PREFIX', '!cx')
 PB_PREFIX = os.getenv('PB_PREFIX', '!pb')
 CLAUDE_CMD = os.getenv('CLAUDE_CMD', 'claude')
+CODEX_CMD = os.getenv('CODEX_CMD', 'codex')
 QT_URL_FILE = os.getenv('URL_OUTPUT_FILE', '')
 STOP_CONFIRM_SECONDS = int(os.getenv('STOP_CONFIRM_SECONDS', '30'))
 BOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,6 +51,7 @@ def authorized_message(message: discord.Message) -> bool:
 async def run_cmd(*cmd: str, timeout: int = 12, cwd: str | None = None) -> tuple[int, str]:
     p = await asyncio.create_subprocess_exec(
         *cmd,
+        stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
@@ -215,6 +218,37 @@ async def on_message(message: discord.Message):
         await message.reply(f'{prefix}\n{out[:1800]}', mention_author=False)
         return
 
+    if text.startswith(CX_PREFIX + ' '):
+        if not authorized_message(message):
+            return
+        rest = text[len(CX_PREFIX):].strip()
+        cwd = None
+        if rest.startswith('-C '):
+            parts = rest[3:].split(None, 1)
+            if len(parts) < 2:
+                await message.reply('Usage: `!cx -C /path/to/dir prompt`', mention_author=False)
+                return
+            cwd, rest = parts
+            if not os.path.isdir(cwd):
+                await message.reply(f'Not a directory: `{cwd}`', mention_author=False)
+                return
+        prompt = rest
+        await message.add_reaction('⏳')
+        rc, out = await run_cmd(CODEX_CMD, 'exec', '--skip-git-repo-check', prompt, timeout=120, cwd=cwd)
+        await message.remove_reaction('⏳', bot.user)
+        # codex 出力から回答本文だけを抽出（"\ncodex\n" と "\ntokens used" の間）
+        marker = '\ncodex\n'
+        end_marker = '\ntokens used'
+        if marker in out:
+            body = out.split(marker, 1)[1]
+            if end_marker in body:
+                body = body.split(end_marker, 1)[0]
+            reply_text = body.strip()
+        else:
+            reply_text = ('NG\n' if rc != 0 else '') + out[:1800]
+        await message.reply(reply_text[:1800] or '(no output)', mention_author=False)
+        return
+
     if text.startswith(PB_PREFIX + ' ') or text == PB_PREFIX:
         if not authorized_message(message):
             return
@@ -230,17 +264,20 @@ async def on_message(message: discord.Message):
             await message.reply(f'Commands: `{PB_PREFIX} refresh`', mention_author=False)
         return
 
+    # !qt コマンド: quick-tunnel サービスの操作
     if text.startswith(QT_PREFIX + ' ') or text == QT_PREFIX:
         if not authorized_message(message):
             return
         args = text[len(QT_PREFIX):].strip().split()
         if args == ['restart']:
+            # quick-tunnel サービスを再起動する
             rc, out = await run_cmd('systemctl', '--user', 'restart', 'quick-tunnel.service')
             await message.reply(
                 f"{'OK' if rc == 0 else 'NG'} qt restart\n```\n{out[:1800]}\n```",
                 mention_author=False,
             )
         elif args == ['url']:
+            # トンネルの公開 URL をファイルから読み取って返す
             if not QT_URL_FILE:
                 await message.reply('QT_URL_FILE is not configured', mention_author=False)
             else:
@@ -251,6 +288,7 @@ async def on_message(message: discord.Message):
                 except FileNotFoundError:
                     await message.reply('URL file not found', mention_author=False)
         else:
+            # サブコマンドが不正な場合はヘルプを表示する
             await message.reply(f'Commands: `{QT_PREFIX} restart | url`', mention_author=False)
 
 
