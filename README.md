@@ -1,6 +1,8 @@
 # claw-ops-bot
 
-DiscordからOpenClaw Gatewayを直接制御する専用Bot（LLM非経由）。
+DiscordからOpenClaw Gatewayを直接制御する専用Bot。PCを開かずにOpenClaw運用できます。  
+<img width="300"  alt="image" src="https://github.com/user-attachments/assets/5820041b-98b7-439b-b357-7926b8f6fd0c" />
+<img width="350" alt="image" src="https://github.com/user-attachments/assets/109bff7a-b582-42b0-bee4-bf0cc074cbf1" />
 
 ## Commands
 
@@ -125,5 +127,4 @@ MIT
 
 ## Notes
 - OpenClaw本体停止中でも、このBotが生きていれば `!oc start` で復旧可能。
-- 既存 `openclaw-power-web` とは非依存。
 - トラブル時ログ: `journalctl --user -u claw-ops-bot.service -n 100 --no-pager`
